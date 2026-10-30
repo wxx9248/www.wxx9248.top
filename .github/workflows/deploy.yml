@@ -1,0 +1,78 @@
+# Build the site on every push and pull request; deploy pushes to master.
+# The build job runs without secrets: only the deploy job, in the production
+# environment, gets the Cloudflare token.
+name: Build and deploy
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # A newer push supersedes a pull request build; deploys run to completion.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Fail rather than update a stale uv.lock.
+  UV_LOCKED: 1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      # pnpm and Node from packageManager and devEngines in package.json, then
+      # pnpm install.
+      - uses: pnpm/setup@v3.1.2
+        with:
+          cache: true
+          require-lockfile: true
+      - uses: astral-sh/setup-uv@v10.3.3
+      - run: pnpm typecheck
+      - run: pnpm format:check
+      # Image, snapshot and site, checked against the static asset limits. Each
+      # build takes the current Alpine packages.
+      - run: make check
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: site
+          path: web/dist
+          if-no-files-found: error
+          retention-days: 1
+          # The VM files and fonts are already compressed.
+          compression-level: 0
+
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://www.wxx9248.top
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      # For wrangler.
+      - uses: pnpm/setup@v3.1.2
+        with:
+          cache: true
+          require-lockfile: true
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: site
+          path: web/dist
+      - run: pnpm exec wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

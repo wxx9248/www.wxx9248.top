@@ -1,0 +1,18 @@
+# Python for the build tools, run through `uv run`, which provides Python and
+# these packages. Only tools/build-fonts.py needs packages; v86's
+# copy-to-sha256.py needs 3.14 for zstd in the standard library. The Python
+# version used is in .python-version.
+[project]
+name = "www-wxx9248-top"
+version = "0"
+requires-python = ">=3.14"
+dependencies = [
+    "brotli==1.2.1",
+    "fonttools==4.68.0",
+]
+
+[tool.uv]
+required-version = ">=0.13"
+package = false
+# Like pnpm's minimumReleaseAge: skip releases younger than a day.
+exclude-newer = "1 day"

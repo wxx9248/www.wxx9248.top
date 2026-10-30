@@ -1,0 +1,47 @@
+# /vm/ and /keys/ are the URL prefixes from web/src/site.ts.
+
+# Security headers for every response. plugins/headers-file.ts fills in the
+# inline scripts' hashes, which change with every build.
+#   script-src: v86 compiles WebAssembly as it runs ('wasm-unsafe-eval').
+#   worker-src: v86 starts a worker from a blob: URL.
+#   style-src:  xterm.js adds <style> elements of its own.
+#   COOP:       a page that opens this one in a popup gets no handle to it.
+#   HSTS:       this host only; other subdomains are left alone.
+# Workers static assets send no CORS header, so other sites can't fetch the
+# VM's files and run it on this site's bandwidth.
+/*
+  Content-Security-Policy: default-src 'none'; script-src 'self' {inline-script-hashes} 'wasm-unsafe-eval'; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Cross-Origin-Opener-Policy: same-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), usb=(), serial=(), hid=(), payment=()
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# Content-addressed (/vm/) or named by hash (/assets/): a file never changes in
+# place, so browsers may keep it for good.
+/vm/flat/*
+  Cache-Control: public, max-age=31536000, immutable
+  Content-Type: application/octet-stream
+
+/vm/state/*
+  Cache-Control: public, max-age=31536000, immutable
+  Content-Type: application/octet-stream
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Font licences and icons keep their names when they change, so they can't be
+# immutable. The fonts themselves are fingerprinted under /assets/.
+/fonts/*
+  Cache-Control: public, max-age=86400
+
+/favicon.*
+  Cache-Control: public, max-age=86400
+
+/apple-touch-icon.png
+  Cache-Control: public, max-age=86400
+
+# Show public keys as text in the tab instead of downloading them (.asc would be
+# application/pgp-keys, and .pub could be taken for Microsoft Publisher).
+/keys/*
+  Content-Type: text/plain; charset=utf-8

@@ -1,0 +1,14 @@
+// Cloudflare Worker that serves the site: static assets only, no Worker code.
+// make deploy builds web/dist and uploads it with `wrangler deploy`.
+{
+  "name": "homepage",
+  // At most the newest date the pinned wrangler's workerd supports.
+  "compatibility_date": "2026-10-19",
+  "assets": {
+    "directory": "./web/dist",
+    // Paths with no file get web/404.html with status 404, not the homepage.
+    "not_found_handling": "404-page"
+  },
+  // Cloudflare creates the DNS record and certificate on deploy.
+  "routes": [{ "pattern": "www.wxx9248.top", "custom_domain": true }]
+}

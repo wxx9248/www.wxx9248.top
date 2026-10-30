@@ -1,0 +1,38 @@
+# Weekly update pull requests, one per ecosystem for minor and patch updates;
+# major updates get their own. The cooldown matches pnpm's minimumReleaseAge
+# and uv's exclude-newer: no releases younger than a day.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 1
+    ignore:
+      # Its major version follows Node's, set in devEngines.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+    groups:
+      npm:
+        update-types: [minor, patch]
+
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 1
+    groups:
+      uv:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 1
+    groups:
+      github-actions:
+        update-types: [minor, patch]

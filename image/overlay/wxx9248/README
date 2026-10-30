@@ -1,0 +1,10 @@
+Hi, I'm wxx9248. Welcome to my homepage, which is also a tiny Linux box.
+
+  bio.md      who I am
+  links.md    where to find me
+  keys.md     my PGP and SSH keys, with the PGP fingerprint
+  keys/       the key files
+
+Try:  md ~/wxx9248/bio.md     about     links     keys
+      gpg --import ~/wxx9248/keys/pgp.asc
+      open https://github.com/wxx9248

@@ -1,0 +1,10 @@
+# /etc/inittab (www.wxx9248.top VM): serial console only, no VGA gettys.
+
+::sysinit:/sbin/openrc sysinit
+::sysinit:/sbin/openrc boot
+::wait:/sbin/openrc default
+
+ttyS0::respawn:/sbin/agetty --autologin visitor --noclear --noissue --nohostname -L 115200 ttyS0 xterm-256color
+
+::ctrlaltdel:/sbin/reboot
+::shutdown:/sbin/openrc shutdown

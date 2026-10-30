@@ -1,0 +1,6 @@
+#!/bin/sh
+# Populate the visitor's RAM-backed home directory on every boot.
+HOME_DIR=/home/visitor
+cp -a /etc/skel/. "$HOME_DIR/"
+ln -sfn /wxx9248 "$HOME_DIR/wxx9248"
+chown -R visitor:users "$HOME_DIR"

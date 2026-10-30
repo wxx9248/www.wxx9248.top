@@ -1,0 +1,11 @@
+#!/sbin/openrc-run
+# Line protocol between the guest and the hosting web page over /dev/ttyS1.
+
+description="Host<->guest channel on ttyS1"
+command=/usr/local/sbin/hostagent
+command_background=true
+pidfile=/run/hostagent.pid
+
+depend() {
+	after localmount
+}

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+    <title>wxx9248</title>
+    <meta name="description" content="wxx9248's homepage">
+    <meta property="og:title" content="wxx9248">
+    <meta property="og:description" content="wxx9248's homepage">
+    <meta property="og:url" content="https://www.wxx9248.top/">
+    <meta property="og:type" content="website">
+    <!-- The accent colour from src/base.css; browsers tint their toolbar with it. -->
+    <meta name="theme-color" content="#33b5e5">
+    <!-- favicon.ico and apple-touch-icon.png are renders of favicon.svg, made by
+         make icons. -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preload" href="@build/fonts/DepartureMono-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <!-- Mode switch and snapshot preloads, before first paint. -->
+    <script type="inline" src="src/head.ts"></script>
+</head>
+<body>
+    <!-- Inlined at build time by plugins/html-include.ts. -->
+    <html-include src="src/plain/plain.html"></html-include>
+    <div id="machine" class="machine" hidden>
+        <div class="screen">
+            <div id="terminal" class="terminal"></div>
+            <a class="escape" href="?plain">Read as a plain page</a>
+            <!-- Where the link under the mouse leads; see src/machine/link-preview.ts. -->
+            <div id="link-preview" class="link-preview" aria-hidden="true" hidden></div>
+        </div>
+        <!-- Keys a phone keyboard lacks; filled by src/machine/extra-keys.ts. -->
+        <div id="extra-keys" class="extra-keys" role="toolbar" aria-label="Extra keys"></div>
+        <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

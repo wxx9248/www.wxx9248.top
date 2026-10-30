@@ -1,0 +1,7 @@
+#!/bin/sh
+# Runs in the login shell while the build takes its snapshot. Blocks until the
+# page restores the snapshot and the host agent says go.
+. /usr/local/lib/host-channel.sh
+[ -e "$RESUMED_MARK" ] && exit 0
+printf 'await\n' > "$HOST_PORT"
+read -r _ < "$RESUME_FIFO"

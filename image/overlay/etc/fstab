@@ -1,0 +1,7 @@
+# The root filesystem is a read-only 9p mount. Everything a visitor may write lives in RAM.
+tmpfs  /home/visitor  tmpfs  mode=0755,uid=1000,gid=100,size=64m  0 0
+tmpfs  /root          tmpfs  mode=0700,size=16m                    0 0
+tmpfs  /tmp           tmpfs  mode=1777,size=64m                    0 0
+tmpfs  /var/tmp       tmpfs  mode=1777,size=16m                    0 0
+tmpfs  /var/log       tmpfs  mode=0755,size=8m                     0 0
+tmpfs  /var/cache     tmpfs  mode=0755,size=16m                    0 0

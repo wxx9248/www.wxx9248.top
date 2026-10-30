@@ -1,0 +1,12 @@
+<!-- A terminal prompt, >_, in the accent colours from base.css, on a 16px
+     pixel grid. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+    <!-- Frame with rounded corners. -->
+    <path fill="#33b5e5" d="M1 1h14v1h1v12h-1v1H1v-1H0V2h1z"/>
+    <!-- Screen. -->
+    <path d="M1 2h14v12H1z"/>
+    <!-- > -->
+    <path fill="#9be9f2" d="M2 4h2v1H2zM3 5h2v1H3zM4 6h2v1H4zM5 7h2v1H5zM4 8h2v1H4zM3 9h2v1H3zM2 10h2v1H2z"/>
+    <!-- Cursor. -->
+    <path fill="#33b5e5" d="M8 10h5v2H8z"/>
+</svg>
