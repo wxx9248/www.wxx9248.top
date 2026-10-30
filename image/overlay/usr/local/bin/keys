@@ -1,0 +1,2 @@
+#!/bin/sh
+exec md /wxx9248/keys.md

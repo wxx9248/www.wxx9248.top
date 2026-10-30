@@ -1,0 +1,12 @@
+#!/bin/sh
+# md FILE...: render Markdown for the terminal and page through it.
+[ $# -gt 0 ] || { echo "usage: md <file.md>..." >&2; exit 2; }
+# Piped into less, lowdown can't see the terminal, so tell it the width.
+cols=$(stty size </dev/tty 2>/dev/null | cut -d' ' -f2)
+# lowdown draws top-level headings in bold bright red, which the page keeps for
+# errors. Draw them in bold cyan like the other headings: the page's accent.
+esc=$(printf '\033')
+# --term-nolinks prints a link's text without its URL; the text stays clickable.
+for file; do
+	lowdown -tterm --term-columns="${cols:-80}" --term-hpadding=2 --term-nolinks "$file" || exit
+done | sed "s/$esc\[1;91m/$esc[1;36m/g" | less -FRX

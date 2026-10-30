@@ -1,0 +1,16 @@
+#!/bin/sh
+# open URL: open a web page in a new browser tab on the host page.
+. /usr/local/lib/host-channel.sh
+# Characters, not bytes; web/src/machine/host-channel.ts drops longer lines.
+MAX_URL=2048
+case "$1" in
+"") echo "usage: open <http(s)://url>" >&2; exit 2 ;;
+# A space or newline would end the message early, or start another.
+*[[:space:][:cntrl:]]*) echo "open: the URL can't contain spaces or control characters" >&2; exit 1 ;;
+http://*|https://*) ;;
+*) echo "open: only http:// and https:// URLs can be opened" >&2; exit 1 ;;
+esac
+if [ ${#1} -gt "$MAX_URL" ]; then
+	echo "open: the URL is longer than $MAX_URL characters" >&2; exit 1
+fi
+printf 'open %s\n' "$1" > "$HOST_PORT" && echo "Opening $1 in a new tab..."

@@ -1,0 +1,12 @@
+#!/bin/sh
+cat <<'MSG'
+  about                   who I am
+  links                   where to find me
+  keys                    my PGP and SSH keys
+  md <file>               read a Markdown file
+  open <url>              open a link in a new browser tab
+  gpg --import ~/wxx9248/keys/pgp.asc
+  fastfetch               system info
+  htop                    processes, CPU and memory
+  doas -s                 become root (it's your sandbox, break it)
+MSG

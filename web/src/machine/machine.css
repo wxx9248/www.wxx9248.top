@@ -1,0 +1,104 @@
+/* Machine: the terminal fills the viewport. Loaded with the machine chunk. */
+
+/* Nothing outside the terminal scrolls, so a swipe can't drag the page. */
+html[data-mode="machine"], html[data-mode="machine"] body {
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+.machine {
+    position: fixed;
+    /* src/machine/viewport.ts overrides top and height while a phone keyboard is open. */
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    padding: var(--cell);
+}
+
+.screen {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+.terminal {
+    width: 100%;
+    height: 100%;
+    /* src/machine/touch-scroll.ts handles swipes, and pinch zoom would break the cell grid. */
+    touch-action: none;
+}
+.terminal .xterm { height: 100%; }
+
+.escape {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    font: 400 var(--cell)/1 var(--pixel);
+    color: var(--muted);
+    opacity: 0.6;
+}
+.escape:hover, .escape:focus-visible { opacity: 1; color: var(--accent); }
+
+/* Bottom left, clear of the escape link, like a browser's status bubble. */
+.link-preview {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    max-width: 70%;
+    padding: calc(var(--cell) / 2) var(--cell);
+    font: 400 var(--cell)/1 var(--pixel);
+    color: var(--fg);
+    background: var(--bg);
+    border: 2px solid var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+}
+
+/* Touch screens only: a mouse and keyboard have all these keys. Same query as
+   src/machine/touch-screen.ts. */
+.extra-keys { display: none; }
+@media (pointer: coarse) {
+    .extra-keys {
+        display: flex;
+        gap: 2px;
+        margin-top: var(--cell);
+        touch-action: manipulation;
+    }
+}
+
+.extra-keys button {
+    flex: 1 1 0;
+    /* A named key never gets narrower than its label; the arrows share the rest. */
+    min-width: max-content;
+    height: calc(var(--cell) * 4);
+    padding: 0 2px;
+    font: 400 var(--cell)/1 var(--pixel);
+    color: var(--fg);
+    background: none;
+    border: 2px solid var(--muted);
+}
+/* Arrows are one glyph, so they can be larger than the named keys. */
+.extra-keys button.glyph { font-size: calc(var(--cell) * 1.5); }
+.extra-keys button:active { border-color: var(--accent); }
+/* A modifier that stays down until the next key. */
+.extra-keys button[aria-pressed="true"] {
+    color: var(--bg);
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.toast {
+    position: absolute;
+    left: 50%;
+    top: calc(var(--cell) * 2);
+    translate: -50% 0;
+    /* Without it, left: 50% would wrap the text at half the screen's width. */
+    width: max-content;
+    max-width: calc(100% - 2 * var(--gutter));
+    padding: var(--cell) calc(var(--cell) * 2);
+    background: var(--bg);
+    border: 2px solid var(--fg);
+    overflow-wrap: anywhere;
+}

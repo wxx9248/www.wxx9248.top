@@ -1,0 +1,24 @@
+#!/bin/sh
+# Plain cyan, which the page's terminal draws in its accent colour.
+CYAN='\033[36m'
+RESET='\033[0m'
+# Columns kept clear on each side of the text.
+MARGIN=2
+
+cols=$(stty size 2>/dev/null | cut -d' ' -f2)
+[ "${cols:-0}" -gt 0 ] || cols=80
+width=$((cols - 2 * MARGIN))
+# Wrap to the terminal, which is narrower than 80 columns on a phone.
+para() { printf '%s\n' "$*" | fold -s -w "$width" | sed 's/^ *//; s/ *$//; s/^/  /'; }
+
+printf "$CYAN"; cat /etc/motd.banner; printf "$RESET"
+echo
+para "Welcome to wxx9248's homepage. This is a real Alpine Linux, running in your" \
+	"browser. The root filesystem is read-only; your home directory lives in RAM" \
+	"and disappears when you close the tab."
+echo
+para "Start with:"
+for command in "cat wxx9248/README" about links help-me; do
+	printf '    %s\n' "$command"
+done
+echo

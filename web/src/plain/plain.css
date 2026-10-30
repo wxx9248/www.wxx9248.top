@@ -1,0 +1,65 @@
+/* Plain page: one left-aligned column, sized by the 11px pixel grid. 404.html
+   uses the same column, text and menu. */
+
+/* data-mode is set by src/head.ts before first paint. */
+html[data-mode="machine"] .plain { display: none; }
+
+.plain {
+    /* A 72-character line of body text, which keeps the PGP fingerprint whole. */
+    max-width: calc(72ch + 2 * var(--gutter));
+    margin: 0 auto;
+    padding: calc(var(--cell) * 6) var(--gutter) calc(var(--cell) * 8);
+}
+
+/* Text: the Markdown from /wxx9248, or the 404 page's message. */
+.prose h1 {
+    font: 400 calc(var(--cell) * 4)/1 var(--pixel);
+    margin: 0 0 calc(var(--cell) * 2);
+}
+
+/* Light accent, like md's headings in the terminal. */
+.prose h2 {
+    font: 400 calc(var(--cell) * 2)/1 var(--pixel);
+    color: var(--accent-light);
+    margin: calc(var(--cell) * 4) 0 var(--cell);
+}
+
+.prose p, .prose ul { margin: 0 0 calc(var(--cell) * 2); }
+.prose ul { padding-left: calc(var(--cell) * 2); }
+.prose li { margin-bottom: calc(var(--cell) / 2); }
+
+.prose .error { color: var(--error); }
+
+/* A menu with one entry, so the prompt cursor (>) always sits on it: the boot
+   button here, the way home on the 404 page. */
+
+.menu { margin-top: calc(var(--cell) * 5); }
+
+.menu :is(button, a) {
+    display: inline-block;
+    font: 400 calc(var(--cell) * 2)/1 var(--pixel);
+    color: var(--fg);
+    text-decoration: none;
+    background: none;
+    border: 0;
+    /* The cursor and a space. */
+    padding: var(--cell) 0 var(--cell) 2ch;
+    position: relative;
+    cursor: pointer;
+}
+
+.menu :is(button, a)::before {
+    content: ">";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+}
+
+.menu :is(button, a):is(:hover, :focus-visible) { color: var(--accent); outline: none; }
+
+.menu-note {
+    color: var(--muted);
+    /* Under the label: 2ch of the label's font, whose characters are 14/11
+       cells wide (Departure Mono's 7px advance on its 11px grid). */
+    margin: calc(var(--cell) / 2) 0 0 calc(var(--cell) * 28 / 11);
+}

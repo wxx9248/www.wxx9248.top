@@ -1,0 +1,53 @@
+#!/bin/sh
+# Host agent: talks to the web page over /dev/ttyS1, one message per line.
+#
+#   page -> guest   resize <rows> <cols>     set the console window size
+#                   resume <epoch> <hex>     after a snapshot restore: fix clock, reseed RNG
+#                   drop-caches              before taking a snapshot
+#   guest -> page   ready | dropped | await | open <url>
+
+. /usr/local/lib/host-channel.sh
+CONSOLE=/dev/ttyS0
+BAUD=115200
+# Free memory left unfilled, so the kernel can still allocate while we fill the rest.
+FILL_RESERVE_KB=8192
+# drop_caches: 1 frees the page cache, 2 dentries and inodes, 3 both.
+DROP_ALL_CACHES=3
+
+stty -F "$HOST_PORT" "$BAUD" raw -echo
+rm -f "$RESUME_FIFO" && mkfifo -m 0644 "$RESUME_FIFO"
+exec 3<>"$HOST_PORT"
+
+send() { printf '%s\n' "$*" >&3; }
+
+send ready
+while IFS= read -r line <&3; do
+	set -- $line
+	case "$1" in
+	resize)
+		stty -F "$CONSOLE" rows "$2" cols "$3" 2>/dev/null
+		;;
+	resume)
+		printf '%s' "$3" > /dev/urandom
+		reseed-rng
+		date -s "@$2" >/dev/null 2>&1
+		# Only the first resume releases the login shell waiting in
+		# /usr/local/libexec/await-resume; a later one would block on the FIFO.
+		if [ ! -e "$RESUMED_MARK" ]; then
+			: > "$RESUMED_MARK"
+			( printf 'go\n' > "$RESUME_FIFO" & )
+		fi
+		;;
+	drop-caches)
+		sync
+		echo "$DROP_ALL_CACHES" > /proc/sys/vm/drop_caches
+		# Free memory may still hold boot-time leftovers such as the compressed
+		# kernel. Overwrite it with zeros so the snapshot compresses well.
+		free_kb=$(awk '/^MemFree:/ { print $2 }' /proc/meminfo)
+		mkdir -p /run/zero && mount -t tmpfs -o size=$((free_kb - FILL_RESERVE_KB))k zero /run/zero
+		dd if=/dev/zero of=/run/zero/fill bs=64k 2>/dev/null
+		umount /run/zero && rmdir /run/zero
+		send dropped
+		;;
+	esac
+done

@@ -1,0 +1,5 @@
+# Install scripts pnpm may run. wrangler's esbuild and workerd ship their
+# binaries as platform packages, so their install scripts aren't needed.
+allowBuilds:
+  esbuild: false
+  workerd: false

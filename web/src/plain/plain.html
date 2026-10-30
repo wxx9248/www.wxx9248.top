@@ -1,0 +1,18 @@
+<!-- The plain page: what phones, crawlers and visitors without JS see. The
+     Markdown comes from image/overlay/wxx9248, rendered at build time by
+     plugins/markdown-include.ts. -->
+<main id="plain" class="plain">
+    <article class="prose">
+        <markdown-include src="bio.md"></markdown-include>
+        <section>
+            <markdown-include src="links.md" heading-offset="1"></markdown-include>
+        </section>
+        <section>
+            <markdown-include src="keys.md" heading-offset="1"></markdown-include>
+        </section>
+    </article>
+    <div class="menu" id="menu" hidden>
+        <button type="button" id="boot">Boot the machine</button>
+        <p class="menu-note">Runs Alpine Linux in this tab. Downloads about 10 MB and works best with a keyboard.</p>
+    </div>
+</main>
