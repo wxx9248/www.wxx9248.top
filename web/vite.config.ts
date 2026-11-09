@@ -38,12 +38,12 @@ export default defineConfig({
     // and font licences.
     mountDirs({
       [VM_FLAT_URL]: path.join(BUILD, "image/flat"),
-      [VM_STATE_URL]: path.join(BUILD, "state/parts"),
+      [VM_STATE_URL]: path.join(BUILD, "snapshot/parts"),
       [KEYS_URL]: path.join(CONTENT, "keys"),
       [FONT_LICENSES_URL]: path.join(BUILD, "fonts/licenses")
     }),
     snapshotManifest(
-      path.join(BUILD, "state/manifest.json"),
+      path.join(BUILD, "snapshot/manifest.json"),
       SNAPSHOT_MANIFEST_ID
     ),
     // First, so the other plugins see the markers inside included fragments.

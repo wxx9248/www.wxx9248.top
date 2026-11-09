@@ -28,16 +28,18 @@ html[data-mode="machine"], html[data-mode="machine"] body {
     touch-action: none;
 }
 .terminal .xterm { height: 100%; }
+/* xterm.css paints the viewport black, which shows below the last row. */
+.terminal .xterm .xterm-viewport { background-color: var(--color-bg-page); }
 
 .escape {
     position: absolute;
     right: 0;
     bottom: 0;
     font: 400 var(--cell)/1 var(--pixel);
-    color: var(--muted);
+    color: var(--color-text-muted);
     opacity: 0.6;
 }
-.escape:hover, .escape:focus-visible { opacity: 1; color: var(--accent); }
+.escape:hover, .escape:focus-visible { opacity: 1; color: var(--color-accent); }
 
 /* Bottom left, clear of the escape link, like a browser's status bubble. */
 .link-preview {
@@ -47,9 +49,9 @@ html[data-mode="machine"], html[data-mode="machine"] body {
     max-width: 70%;
     padding: calc(var(--cell) / 2) var(--cell);
     font: 400 var(--cell)/1 var(--pixel);
-    color: var(--fg);
-    background: var(--bg);
-    border: 2px solid var(--muted);
+    color: var(--color-text-primary);
+    background: var(--color-bg-page);
+    border: 2px solid var(--color-border-input);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -75,18 +77,18 @@ html[data-mode="machine"], html[data-mode="machine"] body {
     height: calc(var(--cell) * 4);
     padding: 0 2px;
     font: 400 var(--cell)/1 var(--pixel);
-    color: var(--fg);
+    color: var(--color-text-primary);
     background: none;
-    border: 2px solid var(--muted);
+    border: 2px solid var(--color-border-input);
 }
 /* Arrows are one glyph, so they can be larger than the named keys. */
 .extra-keys button.glyph { font-size: calc(var(--cell) * 1.5); }
-.extra-keys button:active { border-color: var(--accent); }
+.extra-keys button:active { border-color: var(--color-accent); }
 /* A modifier that stays down until the next key. */
 .extra-keys button[aria-pressed="true"] {
-    color: var(--bg);
-    background: var(--accent);
-    border-color: var(--accent);
+    color: var(--color-text-on-primary);
+    background: var(--color-action-primary);
+    border-color: var(--color-action-primary);
 }
 
 .toast {
@@ -98,7 +100,7 @@ html[data-mode="machine"], html[data-mode="machine"] body {
     width: max-content;
     max-width: calc(100% - 2 * var(--gutter));
     padding: var(--cell) calc(var(--cell) * 2);
-    background: var(--bg);
-    border: 2px solid var(--fg);
+    background: var(--color-bg-page);
+    border: 2px solid var(--color-text-primary);
     overflow-wrap: anywhere;
 }

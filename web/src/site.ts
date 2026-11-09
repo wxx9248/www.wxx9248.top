@@ -11,7 +11,7 @@ export const VM_STATE_URL = "/vm/state/";
  * on the plain page and in the terminal (see openLink).
  */
 export const KEYS_URL = "/keys/";
-/** The fonts' licences, from tools/build-fonts.py. */
+/** The fonts' licences, from fonts/build.py. */
 export const FONT_LICENSES_URL = "/fonts/";
 
 /** The inline <script type="application/json"> holding the snapshot manifest. */

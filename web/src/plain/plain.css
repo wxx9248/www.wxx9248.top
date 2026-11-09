@@ -20,7 +20,7 @@ html[data-mode="machine"] .plain { display: none; }
 /* Light accent, like md's headings in the terminal. */
 .prose h2 {
     font: 400 calc(var(--cell) * 2)/1 var(--pixel);
-    color: var(--accent-light);
+    color: var(--color-text-heading);
     margin: calc(var(--cell) * 4) 0 var(--cell);
 }
 
@@ -28,7 +28,7 @@ html[data-mode="machine"] .plain { display: none; }
 .prose ul { padding-left: calc(var(--cell) * 2); }
 .prose li { margin-bottom: calc(var(--cell) / 2); }
 
-.prose .error { color: var(--error); }
+.prose .error { color: var(--color-text-error); }
 
 /* A menu with one entry, so the prompt cursor (>) always sits on it: the boot
    button here, the way home on the 404 page. */
@@ -38,7 +38,7 @@ html[data-mode="machine"] .plain { display: none; }
 .menu :is(button, a) {
     display: inline-block;
     font: 400 calc(var(--cell) * 2)/1 var(--pixel);
-    color: var(--fg);
+    color: var(--color-text-primary);
     text-decoration: none;
     background: none;
     border: 0;
@@ -52,13 +52,13 @@ html[data-mode="machine"] .plain { display: none; }
     content: ">";
     position: absolute;
     left: 0;
-    color: var(--accent);
+    color: var(--color-accent);
 }
 
-.menu :is(button, a):is(:hover, :focus-visible) { color: var(--accent); outline: none; }
+.menu :is(button, a):is(:hover, :focus-visible) { color: var(--color-accent); outline: none; }
 
 .menu-note {
-    color: var(--muted);
+    color: var(--color-text-muted);
     /* Under the label: 2ch of the label's font, whose characters are 14/11
        cells wide (Departure Mono's 7px advance on its 11px grid). */
     margin: calc(var(--cell) / 2) 0 0 calc(var(--cell) * 28 / 11);

@@ -6,7 +6,7 @@ import type { Plugin } from "vite";
 const MACHINE_PAGE = "index.html";
 
 /**
- * Inline the snapshot manifest written by tools/build-state.mjs as a JSON
+ * Inline the snapshot manifest written by snapshot/build.mjs as a JSON
  * script with element ID `id`, so the page knows which parts to fetch without
  * another round trip. src/head.ts preloads them and
  * src/machine/vm/snapshot.ts downloads them.

@@ -3,3 +3,6 @@
 allowBuilds:
   esbuild: false
   workerd: false
+# The user's own packages, which can be used as soon as they're published.
+minimumReleaseAgeExclude:
+  - "@wxx9248/*"

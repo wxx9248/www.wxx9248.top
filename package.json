@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "license": "AGPL-3.0-or-later",
-  "packageManager": "pnpm@12.15.0",
+  "packageManager": "pnpm@12.17.0",
   "devEngines": {
     "runtime": {
       "name": "node",
@@ -20,6 +20,7 @@
     "format:check": "prettier --check \"**/*.{js,mjs,cjs,ts,mts,cts}\""
   },
   "dependencies": {
+    "@wxx9248/colors": "1.1.0",
     "@xterm/addon-fit": "0.11.0",
     "@xterm/addon-web-links": "0.12.0",
     "@xterm/addon-webgl": "0.19.0",

@@ -6,7 +6,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-V86="$ROOT/build/v86"  # fetched by tools/fetch-v86.mjs
+V86="$ROOT/build/v86"  # fetched by v86/fetch.mjs
 OUT="$ROOT/build/image"
 # Python and its packages come from uv (pyproject.toml).
 PYTHON=(uv run --project "$ROOT" python)

@@ -1,5 +1,5 @@
 # Python for the build tools, run through `uv run`, which provides Python and
-# these packages. Only tools/build-fonts.py needs packages; v86's
+# these packages. Only fonts/build.py needs packages; v86's
 # copy-to-sha256.py needs 3.14 for zstd in the standard library. The Python
 # version used is in .python-version.
 [project]

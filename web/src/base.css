@@ -1,10 +1,15 @@
 /* Tokens and resets shared by both modes. */
 
 /* CJK characters, which Departure Mono lacks: Fusion Pixel, split into files
-   the browser fetches as text needs them. Built by tools/build-fonts.py. */
+   the browser fetches as text needs them. Built by fonts/build.py. */
 @import "@build/fonts/fusion-pixel.css";
 
-/* From tools/build-fonts.py. index.html preloads it by the same path, so both
+/* wxx9248's colours. The page uses its semantic tokens, --color-<token>;
+   src/machine/terminal.ts and web/colors.mjs read the same tokens from its
+   JS API. */
+@import "@wxx9248/colors/index.css";
+
+/* From fonts/build.py. index.html preloads it by the same path, so both
    get the same fingerprinted URL. */
 @font-face {
     font-family: "Departure Mono";
@@ -12,30 +17,14 @@
     font-display: block;
 }
 
-/* src/machine/terminal.ts reads these colours for its theme; keep them #rrggbb. */
 :root {
-    --bg: #000000;
-    --fg: #ededed;
-    /* Secondary text. */
-    --muted: #8d8d96;
-    /* Water blue: the terminal's and the menu's cursors, focus, selection and
-       anything pressed or hovered. public/favicon.svg repeats both
-       blues, and index.html's theme-color repeats this one. */
-    --accent: #33b5e5;
-    /* Its light shade: headings, on the page and in md. */
-    --accent-light: #9be9f2;
-    /* Links, as md shows them in the terminal. */
-    --link: #f7d02c;
-    /* Inline code, as md shows it in the terminal. */
-    --code: #a3c6ff;
-    /* Errors only. */
-    --error: #e3242b;
     /* Departure Mono's 11px pixel grid. Pixel-font sizes and the spacing around
        them are multiples of half a cell, so the glyphs stay crisp. */
     --cell: 0.6875rem;
     /* Side margin for body text. */
     --gutter: 1rem;
     --pixel: "Departure Mono", "Fusion Pixel", ui-monospace, monospace;
+    /* Dark only; the package's tokens would otherwise follow the system. */
     color-scheme: dark;
 }
 
@@ -43,8 +32,8 @@
 
 html, body {
     margin: 0;
-    background: var(--bg);
-    color: var(--fg);
+    background: var(--color-bg-page);
+    color: var(--color-text-primary);
 }
 
 /* One typeface everywhere, as in the terminal. Body text is 1.5 cells on a
@@ -55,18 +44,18 @@ body {
     font-synthesis: none;
 }
 
-code { font: inherit; color: var(--code); }
+code { font: inherit; color: var(--color-text-code); }
 
 [hidden] { display: none !important; }
 
 a {
-    color: var(--link);
+    color: var(--color-link);
     text-underline-offset: 0.2em;
 }
 a:focus-visible, button:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--color-focus-ring);
     outline-offset: 3px;
 }
 
 /* The same selection as the terminal's. */
-::selection { background: color-mix(in srgb, var(--accent) 40%, transparent); }
+::selection { background: var(--color-selection-bg); }

@@ -11,7 +11,7 @@ import type { ProgressListener, VM } from "./vm.ts";
 /**
  * Download the snapshot and resume the machine it holds. A snapshot replaces
  * the whole machine, BIOS included, so the options for booting a kernel
- * (bios, cmdline and so on) are only in tools/build-state.mjs.
+ * (bios, cmdline and so on) are only in snapshot/build.mjs.
  */
 export async function startVM(onProgress: ProgressListener): Promise<VM> {
   const initialState = await fetchSnapshot(onProgress);

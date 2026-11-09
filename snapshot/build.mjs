@@ -3,7 +3,9 @@
 // in await-resume, and save a v86 state snapshot. Visitors restore this snapshot
 // instead of booting, so the page reaches a prompt in about a second.
 //
-// Output: build/state/parts/state-<hash>.<n>.zst and build/state/manifest.json
+//   node snapshot/build.mjs <bzImage> [--verbose]
+//
+// Output: build/snapshot/parts/state-<hash>.<n>.zst and build/snapshot/manifest.json
 
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -22,10 +24,10 @@ import { CONSOLE, HOST_CHANNEL } from "../web/src/machine/vm/vm.ts";
 
 const ROOT = path.join(path.dirname(url.fileURLToPath(import.meta.url)), "..");
 const IMAGE = path.join(ROOT, "build/image");
-const OUT = path.join(ROOT, "build/state");
+const OUT = path.join(ROOT, "build/snapshot");
 const PART_SIZE = 4 * 1024 * 1024;
-// Stock linux-virt keeps ~16 MB of kernel in RAM; a slimmer kernel would shrink this.
-const MAX_COMPRESSED = 10 * 1024 * 1024;
+// Guards against the snapshot growing back: 2.8 MiB when set, plus a margin.
+const MAX_COMPRESSED = 4 * 1024 * 1024;
 const BOOT_TIMEOUT_MS = 5 * 60 * 1000;
 // Let the console output settle after the guest reports "dropped".
 const SETTLE_MS = 1000;
@@ -36,6 +38,12 @@ const HASH_LENGTH = 16;
 // image/overlay/etc/skel/.bash_profile.
 const SNAPSHOT_FLAG = "resume.snapshot";
 const verbose = process.argv.includes("--verbose");
+// The kernel from kernel/build.sh; the Makefile passes the selected build.
+const bzimage = process.argv.slice(2).find((arg) => !arg.startsWith("--"));
+if (!bzimage) {
+  console.error("usage: snapshot/build.mjs <bzImage> [--verbose]");
+  process.exit(2);
+}
 
 const emulator = new V86({
   wasm_path: path.join(ROOT, "node_modules/v86/build/v86.wasm"),
@@ -46,7 +54,8 @@ const emulator = new V86({
   net_device: NET_DEVICE,
   uart1: true,
   autostart: true,
-  bzimage_initrd_from_filesystem: true,
+  // No initrd: the kernel mounts the 9p root itself.
+  bzimage: { url: bzimage },
   cmdline: `${CMDLINE} ${SNAPSHOT_FLAG}`,
   filesystem: {
     baseurl: path.join(IMAGE, "flat"),

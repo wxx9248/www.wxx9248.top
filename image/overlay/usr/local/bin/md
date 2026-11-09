@@ -5,8 +5,11 @@
 cols=$(stty size </dev/tty 2>/dev/null | cut -d' ' -f2)
 # lowdown draws top-level headings in bold bright red, which the page keeps for
 # errors. Draw them in bold cyan like the other headings: the page's accent.
+# Links (bold bright yellow, or underlined green for bare URLs) are plain cyan,
+# the accent, which is also the page's link colour.
 esc=$(printf '\033')
 # --term-nolinks prints a link's text without its URL; the text stays clickable.
 for file; do
 	lowdown -tterm --term-columns="${cols:-80}" --term-hpadding=2 --term-nolinks "$file" || exit
-done | sed "s/$esc\[1;91m/$esc[1;36m/g" | less -FRX
+done | sed -e "s/$esc\[1;91m/$esc[1;36m/g" -e "s/$esc\[1;93m/$esc[36m/g" -e "s/$esc\[4;32m/$esc[4;36m/g" |
+	less -FRX

@@ -9,10 +9,9 @@ RUN gcc -static -Os -s -o /reseed-rng /src/reseed-rng.c
 
 FROM $ALPINE
 
-ARG KERNEL=virt
-
+# No kernel: kernel/ builds it, and v86 boots it directly (snapshot/build.mjs).
 RUN apk add --no-cache \
-        openrc alpine-base agetty linux-$KERNEL linux-firmware-none \
+        openrc alpine-base agetty \
         bash bash-completion less lowdown vim gnupg fastfetch htop doas \
         ncurses-terminfo-base tzdata musl-locales
 
@@ -27,9 +26,8 @@ COPY --from=tools /reseed-rng /usr/local/sbin/
 RUN chmod 0755 /usr/local/bin/* /usr/local/sbin/* /etc/init.d/hostagent /etc/local.d/*.start \
  && chmod -R a+rX,go-w /wxx9248 \
  && for s in devfs dmesg mdev; do rc-update add $s sysinit; done \
- && for s in modules sysctl hostname bootmisc localmount; do rc-update add $s boot; done \
+ && for s in sysctl hostname bootmisc localmount; do rc-update add $s boot; done \
  && rc-update add local default && rc-update add hostagent default \
  && rc-update add killprocs shutdown \
  && ln -sf /usr/share/zoneinfo/UTC /etc/localtime \
- && mkinitfs -F "base virtio 9p" $(cat /usr/share/kernel/$KERNEL/kernel.release) \
  && rm -rf /var/cache/apk/* /usr/share/man /usr/share/doc

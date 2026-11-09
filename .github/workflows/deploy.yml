@@ -37,6 +37,16 @@ jobs:
       - uses: astral-sh/setup-uv@v10.3.3
       - run: pnpm typecheck
       - run: pnpm format:check
+      - run: uv run python -m unittest discover -s kernel
+      # The release kernel. kernel/build.sh skips the build when the hash of its
+      # inputs matches the one stored with these files. Only the outputs: the
+      # source and object files would make the cache about 2.4 GB.
+      - uses: actions/cache@v6.1.0
+        with:
+          path: build/kernel/release
+          # The files kernel/build.sh hashes. Not kernel/**: the unit tests above
+          # leave kernel/__pycache__, which changes on every checkout.
+          key: kernel-${{ hashFiles('kernel/Dockerfile', 'kernel/build.sh', 'kernel/check-config.py', 'kernel/*.config') }}
       # Image, snapshot and site, checked against the static asset limits. Each
       # build takes the current Alpine packages.
       - run: make check
@@ -51,6 +61,20 @@ jobs:
           retention-days: 1
           # The VM files and fonts are already compressed.
           compression-level: 0
+      # The deployed kernel with its debug info, for decoding the addresses in a
+      # crash report.
+      - if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: kernel-release
+          path: |
+            build/kernel/release/vmlinux
+            build/kernel/release/.config
+            build/kernel/release/System.map
+          if-no-files-found: error
+          retention-days: 90
+          # .config is a dotfile.
+          include-hidden-files: true
 
   deploy:
     needs: build

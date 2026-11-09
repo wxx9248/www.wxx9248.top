@@ -1,7 +1,7 @@
 import { SNAPSHOT_MANIFEST_ID, VM_STATE_URL } from "@/site.ts";
 import type { ProgressListener } from "./vm.ts";
 
-/** Written by tools/build-state.mjs and inlined into the page at build time. */
+/** Written by snapshot/build.mjs and inlined into the page at build time. */
 type Manifest = { size: number; parts: string[] };
 
 export function readManifest(): Manifest {
