@@ -8,7 +8,7 @@ prompt, since the others follow from those.
 Usage: compare-config.py <kernel source tree> <our .config> <Alpine's config>
 
   curl -fsSLO https://gitlab.alpinelinux.org/alpine/aports/-/raw/master/main/linux-lts/virt.x86.config
-  kernel/compare-config.py build/kernel/src/linux-<version> build/kernel/release/.config virt.x86.config
+  kernel/scripts/compare-config.py build/kernel/src/linux-<version> build/kernel/release/.config virt.x86.config
 """
 
 import importlib.util

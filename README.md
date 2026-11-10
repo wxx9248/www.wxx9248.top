@@ -6,7 +6,7 @@
 |---|---|
 | `image/overlay/wxx9248/` | Public files: bio, links, keys. The single source for the VM's `/wxx9248` and the plain page. |
 | `image/` | Guest root filesystem: `Dockerfile`, `overlay/` (copied over `/`: init, fstab, helpers, host agent, `/wxx9248`), `build.sh`, `patch-rootfs-tar.py` (replaces the files Docker manages in the exported image), and `reseed-rng.c` (forces the kernel to reseed its RNG after a restore) |
-| `kernel/` | The guest kernel: `build.sh` builds it in a container (`Dockerfile`) from tinyconfig plus `base.config` and `release.config` or `debug.config`; `check-config.py` fails the build when kconfig drops a requested option; `compare-config.py` lists what Alpine's kernel has that ours doesn't, for review on version bumps |
+| `kernel/` | The guest kernel: `build.sh` builds it in a container (`Dockerfile`) from tinyconfig plus `config/base.config` and `config/release.config` or `config/debug.config`; `scripts/check-config.py` fails the build when kconfig drops a requested option; `scripts/compare-config.py` lists what Alpine's kernel has that ours doesn't, for review on version bumps; `tests/` holds the scripts' tests |
 | `snapshot/` | `build.mjs` boots the guest headlessly and saves the snapshot that visitors restore; `bench.mjs` restores it headlessly and times the load, the resume and shell workloads, to compare kernel builds |
 | `v86/` | `fetch.mjs` fetches v86's BIOS images and rootfs tools from the commit of the installed npm package, so `package.json` is the only place v86's version lives |
 | `fonts/` | `build.py` fetches Departure Mono and Fusion Pixel from their pinned releases and splits Fusion Pixel into per-range files; the script is the only place their versions live |
@@ -15,7 +15,7 @@
 ## How it works
 
 - **Root filesystem:** a read-only 9p mount. Each file is a zstd blob named by its hash, fetched the first time the guest opens it. `/home/visitor`, `/tmp` and friends are tmpfs.
-- **Kernel:** Linux built for v86 and nothing else: tinyconfig plus the options in `kernel/`, with no modules and no initramfs. v86 boots the `bzImage` directly, and the kernel mounts the 9p root itself. A debug build adds symbols, frame pointers and SysRq.
+- **Kernel:** Linux built for v86 and nothing else: tinyconfig plus the options in `kernel/config/`, with no modules and no initramfs. v86 boots the `bzImage` directly, and the kernel mounts the 9p root itself. A debug build adds symbols, frame pointers and SysRq.
 - **Boot:** visitors don't boot. They restore a snapshot of a machine that has already booted and logged in. Before saving it, the build drops caches and zero-fills free RAM so it compresses well.
 - **Host channel:** `/dev/ttyS1` carries a line protocol between the guest's `hostagent` and the page. `resize`/`resume` go to the guest; `open <url>` comes back from it.
 - **Fonts:** everything is set in [Departure Mono](https://departuremono.com), with CJK characters from the Simplified Chinese build of [Fusion Pixel Font](https://github.com/TakWolf/fusion-pixel-font) (12px monospaced), both OFL. All of Fusion Pixel's language builds have the same characters, so one build serves Chinese, Japanese and Korean; Han characters take their mainland Chinese shapes. `make fonts` (`fonts/build.py`, part of every build) fetches both fonts' releases named in the script, checks their hashes, and splits Fusion Pixel into 24 files of about 40 KB with their `@font-face` rules, all in `build/fonts/`. The page imports the fonts from there, so Vite fingerprints them and they are cached as immutable; their licences are served at `/fonts/`. A browser only downloads the files for characters it shows: the plain page needs just the 8 KB kana file.
@@ -42,5 +42,5 @@ make fonts    # build/fonts: Departure Mono, and Fusion Pixel split into per-ran
 pnpm format   # Prettier for JS/TS (pnpm format:check to verify)
 ```
 
-Changing anything under `image/` requires `make image snapshot` again, and under `kernel/`, `make snapshot`; `make deploy` does both for you. `uv run python -m unittest discover -s kernel` runs the kernel scripts' tests.
+Changing anything under `image/` requires `make image snapshot` again, and under `kernel/`, `make snapshot`; `make deploy` does both for you. `uv run python -m unittest discover -s kernel/tests` runs the kernel scripts' tests.
 

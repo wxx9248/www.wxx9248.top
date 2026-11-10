@@ -37,7 +37,7 @@ jobs:
       - uses: astral-sh/setup-uv@v10.3.3
       - run: pnpm typecheck
       - run: pnpm format:check
-      - run: uv run python -m unittest discover -s kernel
+      - run: uv run python -m unittest discover -s kernel/tests
       # The release kernel. kernel/build.sh skips the build when the hash of its
       # inputs matches the one stored with these files. Only the outputs: the
       # source and object files would make the cache about 2.4 GB.
@@ -45,8 +45,8 @@ jobs:
         with:
           path: build/kernel/release
           # The files kernel/build.sh hashes. Not kernel/**: the unit tests above
-          # leave kernel/__pycache__, which changes on every checkout.
-          key: kernel-${{ hashFiles('kernel/Dockerfile', 'kernel/build.sh', 'kernel/check-config.py', 'kernel/*.config') }}
+          # leave __pycache__ directories, which change on every checkout.
+          key: kernel-${{ hashFiles('kernel/Dockerfile', 'kernel/build.sh', 'kernel/scripts/check-config.py', 'kernel/config/*.config') }}
       # Image, snapshot and site, checked against the static asset limits. Each
       # build takes the current Alpine packages.
       - run: make check

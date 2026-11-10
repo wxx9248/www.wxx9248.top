@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Build the guest kernel: tinyconfig plus our option files, in a container.
+# Build the guest kernel: tinyconfig plus our option files in config/, in a
+# container.
 #   kernel/build.sh <release|debug>
 # Output in build/kernel/<build>/: bzImage, vmlinux, .config, System.map, and
 # inputs.sha256, which lets a later run skip the build when nothing changed.
@@ -27,10 +28,11 @@ if ! flock --nonblock 9; then
     exit 1
 fi
 
-# The build depends on these files, the version and the build name. Comparing a
-# hash instead of timestamps keeps a kernel restored from the CI cache, whose
-# inputs actions/checkout has just rewritten.
-hash=$( (cd "$ROOT/kernel" && cat Dockerfile build.sh check-config.py base.config "$BUILD.config"
+# The build depends on these files, the version and the build name; the CI
+# cache key in deploy.yml names the same files. Comparing a hash instead of
+# timestamps keeps a kernel restored from the CI cache, whose inputs
+# actions/checkout has just rewritten.
+hash=$( (cd "$ROOT/kernel" && cat Dockerfile build.sh scripts/check-config.py config/base.config "config/$BUILD.config"
          echo "$KERNEL_VERSION $BUILD") | sha256sum | cut -d' ' -f1)
 if [[ -f "$OUT/inputs.sha256" && "$(cat "$OUT/inputs.sha256")" == "$hash" ]]; then
     echo "kernel $BUILD: up to date"
@@ -70,7 +72,8 @@ fi
 mkdir -p "$obj"
 touch "$obj.incomplete"
 
-docker build --quiet --tag "$IMAGE_NAME" "$ROOT/kernel" >/dev/null
+# No build context: the Dockerfile copies nothing in.
+docker build --quiet --tag "$IMAGE_NAME" - <"$ROOT/kernel/Dockerfile" >/dev/null
 # merge_config.sh -n applies the files with allnoconfig, as tinyconfig itself
 # does, so an option our files don't name stays off even when turning on its
 # parent makes it visible. check-config.py then catches what kconfig dropped.
@@ -94,8 +97,8 @@ docker run --rm --name "$CONTAINER_NAME" --userns=host --user "$(id -u):$(id -g)
         make O="$obj" tinyconfig >/dev/null
         cp "$obj/.config" "$obj/tinyconfig"
         scripts/kconfig/merge_config.sh -n -O "$obj" \
-            "$obj/tinyconfig" /kernel/base.config "/kernel/$BUILD.config" >"$obj/merge.log"
-        python3 /kernel/check-config.py "$obj/.config" /kernel/base.config "/kernel/$BUILD.config"
+            "$obj/tinyconfig" /kernel/config/base.config "/kernel/config/$BUILD.config" >"$obj/merge.log"
+        python3 /kernel/scripts/check-config.py "$obj/.config" /kernel/config/base.config "/kernel/config/$BUILD.config"
         make O="$obj" -j"$(nproc)" bzImage
         size "$obj/vmlinux"
     ' &

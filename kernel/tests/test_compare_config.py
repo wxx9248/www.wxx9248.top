@@ -1,4 +1,4 @@
-"""Tests for compare-config.py: uv run python -m unittest discover -s kernel"""
+"""Tests for compare-config.py: uv run python -m unittest discover -s kernel/tests"""
 
 import importlib.util
 import subprocess
@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-SCRIPT = Path(__file__).with_name("compare-config.py")
+SCRIPT = Path(__file__).parent.parent / "scripts" / "compare-config.py"
 spec = importlib.util.spec_from_file_location("compare_config", SCRIPT)
 cc = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(cc)
