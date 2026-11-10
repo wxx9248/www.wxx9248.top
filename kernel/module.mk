@@ -5,11 +5,12 @@
 #   KERNEL_BZIMAGE   build/kernel/$(KERNEL)/bzImage
 #   KERNEL_SELECTED  records $(KERNEL), rewritten only when it changes, so
 #                    switching back to release rebuilds a snapshot made with
-#                    the debug kernel
+#                    the debug kernel. A stamp (see the Makefile): use it only
+#                    as a prerequisite.
 
 KERNEL ?= release
 KERNEL_BZIMAGE := build/kernel/$(KERNEL)/bzImage
-KERNEL_SELECTED := build/kernel/selected
+KERNEL_SELECTED := $$(call stamp,build/kernel/selected,echo $(KERNEL))
 
 .PHONY: kernel
 kernel: $(KERNEL_BZIMAGE)
@@ -19,9 +20,3 @@ kernel: $(KERNEL_BZIMAGE)
 # It leaves the bzImage untouched when nothing changed.
 $(KERNEL_BZIMAGE): FORCE
 	./kernel/build.sh $(KERNEL)
-
-# Runs whenever the snapshot is considered, even under make -n (the +), but
-# changes the file only when the choice changes.
-$(KERNEL_SELECTED): FORCE
-	+@mkdir -p $(@D) && echo $(KERNEL) > $@.new
-	+@cmp -s $@.new $@ && rm $@.new || mv $@.new $@
