@@ -1,0 +1,166 @@
+From 76c7001b0b5010cd3201c79799ea08e98d4a2375 Mon Sep 17 00:00:00 2001
+From: wxx9248 <wxx9248@gmail.com>
+Date: Tue, 10 Nov 2026 00:02:34 -0800
+Subject: [PATCH] misc: host-power: tell the host page about power events
+
+The guest runs in v86, a PC emulator in a web page. Restart, halt,
+power-off and panic leave the page with a machine that does nothing, as
+v86 reports none of them. Write a one-byte code to I/O port 0x600 from a
+reboot notifier (restart, halt), a power-off handler (power-off) and a
+panic notifier (panic), so the page can respond. Only kernel code or
+root can write I/O ports, so users can't fake an event.
+---
+ drivers/misc/Kconfig      |  11 ++++
+ drivers/misc/Makefile     |   1 +
+ drivers/misc/host-power.c | 108 ++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 120 insertions(+)
+ create mode 100644 drivers/misc/host-power.c
+
+diff --git a/drivers/misc/Kconfig b/drivers/misc/Kconfig
+index b9c11f6..5dbf9da 100644
+--- a/drivers/misc/Kconfig
++++ b/drivers/misc/Kconfig
+@@ -644,6 +644,17 @@ config MCHP_LAN966X_PCI
+ 	    - lan966x-miim (MDIO_MSCC_MIIM)
+ 	    - lan966x-switch (LAN966X_SWITCH)
+ 
++config HOST_POWER
++	bool "Tell the hosting web page about power events"
++	depends on X86
++	help
++	  For a machine emulated in a web page (v86). When the machine
++	  restarts, halts, powers off or panics, write a code to I/O port
++	  0x600 (1 restart, 2 halt, 3 power-off, 4 panic), so the page can
++	  respond. Also makes the machine able to power off.
++
++	  If unsure, say N.
++
+ source "drivers/misc/c2port/Kconfig"
+ source "drivers/misc/eeprom/Kconfig"
+ source "drivers/misc/cb710/Kconfig"
+diff --git a/drivers/misc/Makefile b/drivers/misc/Makefile
+index b32a259..f1640f3 100644
+--- a/drivers/misc/Makefile
++++ b/drivers/misc/Makefile
+@@ -75,3 +75,4 @@ obj-$(CONFIG_MCHP_LAN966X_PCI)	+= lan966x-pci.o
+ obj-y				+= keba/
+ obj-y				+= amd-sbi/
+ obj-$(CONFIG_MISC_RP1)		+= rp1/
++obj-$(CONFIG_HOST_POWER)	+= host-power.o
+diff --git a/drivers/misc/host-power.c b/drivers/misc/host-power.c
+new file mode 100644
+index 0000000..1101326
+--- /dev/null
++++ b/drivers/misc/host-power.c
+@@ -0,0 +1,108 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * host-power: tell the web page hosting this machine about power events.
++ *
++ * The guest runs in v86, a PC emulator in the browser. When the machine
++ * restarts, halts, powers off or panics, this driver writes a one-byte code to
++ * an I/O port that the page listens on, so the page can reload, show a
++ * powered-off screen, or keep the panic on screen. Only kernel code (or root)
++ * can write I/O ports, so a user can't fake an event.
++ *
++ * The port and codes must match web/src/machine/vm/power-port.ts in
++ * www.wxx9248.top.
++ */
++
++#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
++
++#include <linux/init.h>
++#include <linux/io.h>
++#include <linux/ioport.h>
++#include <linux/irqflags.h>
++#include <linux/notifier.h>
++#include <linux/panic_notifier.h>
++#include <linux/printk.h>
++#include <linux/reboot.h>
++
++#define HOST_POWER_PORT		0x600
++
++#define HOST_POWER_RESTART	1
++#define HOST_POWER_HALT		2
++#define HOST_POWER_OFF		3
++#define HOST_POWER_PANIC	4
++
++static void host_power_send(u8 code)
++{
++	outb(code, HOST_POWER_PORT);
++}
++
++/*
++ * Called by kernel_restart() and kernel_halt() once userspace has shut down,
++ * and also by kernel_power_off(), which signals later, from the power-off
++ * handler. x86 never runs restart handlers, so restart is signalled here.
++ */
++static int host_power_reboot(struct notifier_block *nb, unsigned long action,
++			     void *data)
++{
++	if (action == SYS_RESTART)
++		host_power_send(HOST_POWER_RESTART);
++	else if (action == SYS_HALT)
++		host_power_send(HOST_POWER_HALT);
++	return NOTIFY_DONE;
++}
++
++static struct notifier_block host_power_reboot_nb = {
++	.notifier_call = host_power_reboot,
++};
++
++/*
++ * The machine's power-off: runs last, after "reboot: Power down". Like cutting
++ * the power, it never returns; otherwise kernel_power_off() would return, init
++ * would exit, and the kernel would panic.
++ */
++static int host_power_off(struct sys_off_data *data)
++{
++	host_power_send(HOST_POWER_OFF);
++	local_irq_disable();
++	for (;;)
++		halt();
++	/* Not reached; C requires a return statement here. */
++	return NOTIFY_DONE;
++}
++
++/*
++ * Runs after the panic message and stack trace, before the kernel flushes its
++ * last console output.
++ */
++static int host_power_panic(struct notifier_block *nb, unsigned long action,
++			    void *data)
++{
++	host_power_send(HOST_POWER_PANIC);
++	return NOTIFY_DONE;
++}
++
++static struct notifier_block host_power_panic_nb = {
++	.notifier_call = host_power_panic,
++};
++
++static int __init host_power_init(void)
++{
++	struct sys_off_handler *handler;
++
++	if (!request_region(HOST_POWER_PORT, 1, "host-power")) {
++		pr_err("port 0x%x is in use\n", HOST_POWER_PORT);
++		return -EBUSY;
++	}
++	handler = register_sys_off_handler(SYS_OFF_MODE_POWER_OFF,
++					   SYS_OFF_PRIO_DEFAULT,
++					   host_power_off, NULL);
++	if (IS_ERR(handler)) {
++		release_region(HOST_POWER_PORT, 1);
++		return PTR_ERR(handler);
++	}
++	register_reboot_notifier(&host_power_reboot_nb);
++	atomic_notifier_chain_register(&panic_notifier_list,
++				       &host_power_panic_nb);
++	pr_info("port 0x%x\n", HOST_POWER_PORT);
++	return 0;
++}
++device_initcall(host_power_init);
+-- 
+2.56.0
+

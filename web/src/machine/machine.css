@@ -41,6 +41,19 @@ html[data-mode="machine"], html[data-mode="machine"] body {
 }
 .escape:hover, .escape:focus-visible { opacity: 1; color: var(--color-accent); }
 
+/* Once the machine has stopped, centred below the terminal; the terminal
+   shrinks to make room, so the button covers none of its text. */
+.power-button {
+    align-self: center;
+    margin-top: var(--cell);
+    padding: var(--cell) calc(var(--cell) * 2);
+    font: 400 var(--cell)/1 var(--pixel);
+    color: var(--color-text-primary);
+    background: var(--color-bg-page);
+    border: 2px solid var(--color-border-input);
+}
+.power-button:hover, .power-button:focus-visible { border-color: var(--color-accent); }
+
 /* Bottom left, clear of the escape link, like a browser's status bubble. */
 .link-preview {
     position: absolute;

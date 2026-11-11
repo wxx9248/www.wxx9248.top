@@ -20,20 +20,29 @@ TREE="$SRC/linux-$KERNEL_VERSION"
 OUT="$ROOT/build/kernel/$BUILD"
 IMAGE_NAME=wxx9248/homepage-kernel
 
-# One build of each kind at a time: two would share obj/<build>.
+# One kernel build at a time: release and debug share the source tree, which a
+# build replaces when the patches change.
 mkdir -p "$ROOT/build/kernel"
-exec 9>"$ROOT/build/kernel/$BUILD.lock"
+exec 9>"$ROOT/build/kernel/build.lock"
 if ! flock --nonblock 9; then
-    echo "kernel $BUILD: another build is running" >&2
+    echo "kernel: another build is running" >&2
     exit 1
 fi
 
-# The build depends on these files, the version and the build name; the CI
-# cache key in deploy.yml names the same files. Comparing a hash instead of
-# timestamps keeps a kernel restored from the CI cache, whose inputs
+# Our changes to the kernel source, applied in name order with patch -p1.
+shopt -s nullglob
+PATCHES=("$ROOT"/kernel/patches/*.patch)
+shopt -u nullglob
+# Their contents in order, not their names: renaming a patch without changing
+# the order changes nothing, as for the CI cache key's hashFiles.
+patch_hash=$(for p in "${PATCHES[@]}"; do cat "$p"; done | sha256sum | cut -d' ' -f1)
+
+# The build depends on these files, the patches, the version and the build
+# name; the CI cache key in deploy.yml names the same files. Comparing a hash
+# instead of timestamps keeps a kernel restored from the CI cache, whose inputs
 # actions/checkout has just rewritten.
 hash=$( (cd "$ROOT/kernel" && cat Dockerfile build.sh scripts/check-config.py config/base.config "config/$BUILD.config"
-         echo "$KERNEL_VERSION $BUILD") | sha256sum | cut -d' ' -f1)
+         echo "$KERNEL_VERSION $BUILD $patch_hash") | sha256sum | cut -d' ' -f1)
 if [[ -f "$OUT/inputs.sha256" && "$(cat "$OUT/inputs.sha256")" == "$hash" ]]; then
     echo "kernel $BUILD: up to date"
     exit 0
@@ -42,7 +51,10 @@ fi
 # never looks finished.
 rm -f "$OUT/inputs.sha256"
 
-if [[ ! -d "$TREE" ]]; then
+# The tree records the patches applied to it. Patches can't be taken back out
+# reliably, so a tree with other patches is replaced by a fresh one.
+if [[ ! -d "$TREE" || "$(cat "$TREE.patches" 2>/dev/null)" != "$patch_hash" ]]; then
+    rm -rf "$TREE" "$TREE.patches"
     mkdir -p "$SRC"
     tarball="$SRC/linux-$KERNEL_VERSION.tar.xz"
     if [[ ! -f "$tarball" ]]; then
@@ -55,21 +67,39 @@ if [[ ! -d "$TREE" ]]; then
         fi
         mv "$tarball.part" "$tarball"
     fi
-    # Extract beside the tree and rename, so a half-extracted tree is never used.
+    # Extract and patch beside the tree, then rename, so a half-extracted or
+    # half-patched tree is never used. The record is written last.
     rm -rf "$SRC/.extract" && mkdir "$SRC/.extract"
     tar -xf "$tarball" -C "$SRC/.extract"
+    for p in "${PATCHES[@]}"; do
+        echo "kernel: applying $(basename "$p")"
+        # --fuzz=0: every context line must match, or the hunk fails. A hunk
+        # whose lines moved still applies; patch reports the offset, and a
+        # patch with offsets is worth refreshing. No .orig backups in the tree.
+        if ! patch -d "$SRC/.extract/linux-$KERNEL_VERSION" -p1 --forward --batch --fuzz=0 \
+                --no-backup-if-mismatch <"$p"; then
+            echo "kernel: $(basename "$p") does not apply" >&2
+            exit 1
+        fi
+    done
     mv "$SRC/.extract/linux-$KERNEL_VERSION" "$TREE"
     rmdir "$SRC/.extract"
+    echo "$patch_hash" >"$TREE.patches"
 fi
 
 # Object files make rebuilds quick, but a build stopped part-way can leave a
 # half-written generated file that make then trusts. Such a build leaves this
-# marker behind, and the next one starts from an empty directory.
+# marker behind, and the next one starts from an empty directory. So do objects
+# built from another kernel version or other patches: tar restores the
+# archive's timestamps, so a file that changed since would look older than its
+# object.
 obj="$ROOT/build/kernel/obj/$BUILD"
-if [[ -e "$obj.incomplete" ]]; then
+source_id="$KERNEL_VERSION $patch_hash"
+if [[ -e "$obj.incomplete" || "$(cat "$obj.patches" 2>/dev/null)" != "$source_id" ]]; then
     rm -rf "$obj"
 fi
 mkdir -p "$obj"
+echo "$source_id" >"$obj.patches"
 touch "$obj.incomplete"
 
 # No build context: the Dockerfile copies nothing in.

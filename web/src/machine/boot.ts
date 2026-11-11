@@ -7,6 +7,7 @@ import { connectConsole } from "./console.ts";
 import { createExtraKeys } from "./extra-keys.ts";
 import { connectHostChannel } from "./host-channel.ts";
 import { createLinkPreview } from "./link-preview.ts";
+import { connectPower } from "./power.ts";
 import { openLink, openUrl } from "./open-url.ts";
 import { showSplash } from "./splash.ts";
 import { createTerminal } from "./terminal.ts";
@@ -42,6 +43,7 @@ export async function boot() {
   }
 
   connectConsole(term, vm, filter);
+  connectPower(vm, term, byId("power-button"));
   syncTitle(term);
   const channel = connectHostChannel(vm, { open: openUrl });
   term.onResize(({ rows, cols }) => channel.resize(rows, cols));

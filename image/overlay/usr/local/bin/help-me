@@ -9,4 +9,5 @@ cat <<'MSG'
   fastfetch               system info
   htop                    processes, CPU and memory
   doas -s                 become root (it's your sandbox, break it)
+  doas reboot / poweroff  restart or switch off the machine
 MSG

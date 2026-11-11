@@ -1,10 +1,11 @@
-// The only module that knows about v86.
+// With power-port.ts, the only modules that know about v86.
 
 import { V86, type V86Options } from "v86";
 import wasmUrl from "v86/build/v86.wasm?url";
 
 import { VM_FLAT_URL } from "@/site.ts";
 import { MEMORY_SIZE, NET_DEVICE, VGA_MEMORY_SIZE } from "./config.ts";
+import { listenToPowerPort } from "./power-port.ts";
 import { fetchSnapshot } from "./snapshot.ts";
 import type { ProgressListener, VM } from "./vm.ts";
 
@@ -35,12 +36,20 @@ export async function startVM(onProgress: ProgressListener): Promise<VM> {
     emulator.add_listener("emulator-started", () => resolve())
   );
 
+  let stopped = false;
   return {
-    write: (port, data) => emulator.serial_send_bytes(port, data),
+    write: (port, data) => {
+      if (!stopped) emulator.serial_send_bytes(port, data);
+    },
     onOutput: (port, listener) =>
       emulator.add_listener(
         `serial${port}-output-byte` as "serial0-output-byte",
         listener
-      )
+      ),
+    onPower: (listener) => listenToPowerPort(emulator, listener),
+    stop: () => {
+      stopped = true;
+      return emulator.stop();
+    }
   };
 }

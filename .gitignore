@@ -423,3 +423,6 @@ __marimo__/
 # ===== Extra =====
 .wrangler/
 docs/
+# *.d above is for compiler dependency files; the guest's /etc/*.d directories
+# are source.
+!image/overlay/**/*.d/

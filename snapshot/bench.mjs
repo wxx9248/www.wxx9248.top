@@ -7,25 +7,14 @@
 //
 // Output: build/bench/<name>.json
 
-import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import url from "node:url";
-import zlib from "node:zlib";
-import { V86 } from "v86";
 
-import {
-  MEMORY_SIZE,
-  VGA_MEMORY_SIZE,
-  NET_DEVICE
-} from "../web/src/machine/vm/config.ts";
-import { CONSOLE, HOST_CHANNEL } from "../web/src/machine/vm/vm.ts";
+import { loadSnapshot, startMachine } from "./machine.mjs";
 
 const ROOT = path.join(path.dirname(url.fileURLToPath(import.meta.url)), "..");
-const STATE = path.join(ROOT, "build/snapshot");
 const OUT = path.join(ROOT, "build/bench");
-// As many random bytes as host-channel.ts sends with resume.
-const ENTROPY_BYTES = 32;
 
 // What visitors do: run commands, start programs, read files and /proc.
 const WORKLOADS = [
@@ -73,93 +62,16 @@ function usage() {
 
 const ms = (start) => Math.round(performance.now() - start);
 
-const manifest = JSON.parse(
-  fs.readFileSync(path.join(STATE, "manifest.json"), "utf8")
-);
-const compressed = Buffer.concat(
-  manifest.parts.map((name) => fs.readFileSync(path.join(STATE, "parts", name)))
-);
-let start = performance.now();
-const state = zlib.zstdDecompressSync(compressed);
-const decompressMs = ms(start);
-
-start = performance.now();
-const emulator = new V86({
-  wasm_path: path.join(ROOT, "node_modules/v86/build/v86.wasm"),
-  memory_size: MEMORY_SIZE,
-  vga_memory_size: VGA_MEMORY_SIZE,
-  net_device: NET_DEVICE,
-  uart1: true,
-  filesystem: { baseurl: path.join(ROOT, "build/image/flat") },
-  initial_state: {
-    buffer: state.buffer.slice(
-      state.byteOffset,
-      state.byteOffset + state.length
-    )
-  },
-  disable_keyboard: true,
-  disable_mouse: true,
-  disable_speaker: true,
-  autostart: true
-});
-await new Promise((resolve) =>
-  emulator.add_listener("emulator-started", resolve)
-);
-const restoreMs = ms(start);
-
-// Everything the console prints; waits search it from a position onwards.
-let output = "";
-const waiters = new Set();
-emulator.add_listener(`serial${CONSOLE}-output-byte`, (byte) => {
-  output += String.fromCharCode(byte);
-  for (const waiter of waiters) waiter();
-});
-
-/** Resolve with the output from `from` once `done` matches it. */
-function waitFor(from, done, name) {
-  return new Promise((resolve) => {
-    const timer = setTimeout(async () => {
-      console.error(`bench: ${name} timed out after ${timeoutSeconds} s`);
-      await emulator.destroy();
-      process.exit(1);
-    }, timeoutSeconds * 1000);
-    const check = () => {
-      const text = output.slice(from);
-      if (!done(text)) return;
-      clearTimeout(timer);
-      waiters.delete(check);
-      resolve(text);
-    };
-    waiters.add(check);
-    check();
-  });
-}
-
-const typeLine = (line) =>
-  emulator.serial_send_bytes(CONSOLE, new TextEncoder().encode(line + "\r"));
-
-// The prompt may be followed by colour resets and a window-title sequence.
-const stripEscapes = (text) =>
-  text.replace(/\x1b\][^\x07]*\x07|\x1b\[[0-9;?]*[A-Za-z]/g, "");
-
-start = performance.now();
-let from = output.length;
-const entropy = crypto.randomBytes(ENTROPY_BYTES).toString("hex");
-emulator.serial_send_bytes(
-  HOST_CHANNEL,
-  new TextEncoder().encode(
-    `resume ${Math.floor(Date.now() / 1000)} ${entropy}\n`
-  )
-);
-await waitFor(from, (text) => stripEscapes(text).endsWith("$ "), "resume");
-const resumeMs = ms(start);
+const { state, compressedBytes, decompressMs } = loadSnapshot();
+const machine = await startMachine(state, { timeoutSeconds });
+const { restoreMs, output, waitFor, typeLine } = machine;
 
 // Each wait looks for a marker the command computes, so the echo of the typed
 // line, which shows $((k+0)) and not its value, can't match it.
 let marker = 0;
 async function run(command, name) {
   const k = ++marker;
-  from = output.length;
+  const from = output().length;
   const begin = performance.now();
   typeLine(`${command} >/dev/null 2>&1; echo __DONE$((${k}+0))`);
   await waitFor(from, (text) => text.includes(`__DONE${k}\r`), name);
@@ -169,7 +81,7 @@ async function run(command, name) {
 /** [user + nice, system + irq + softirq] ticks so far, from /proc/stat. */
 async function cpuTicks() {
   const k = ++marker;
-  from = output.length;
+  const from = output().length;
   typeLine(`head -1 /proc/stat; echo __STAT$((${k}+0))`);
   const text = await waitFor(
     from,
@@ -183,37 +95,49 @@ async function cpuTicks() {
   return [user + nice, system + irq + softirq];
 }
 
+let resumeMs;
 const results = [];
-for (const [name, command] of workloads) {
-  const before = await cpuTicks();
-  const firstMs = await run(command, name);
-  const after = await cpuTicks();
-  const times = [];
-  for (let i = 0; i < runs; i++) times.push(await run(command, name));
-  times.sort((a, b) => a - b);
-  results.push({
-    name,
-    command,
-    firstMs,
-    medianMs: times[Math.floor(times.length / 2)],
-    minMs: times[0],
-    maxMs: times[times.length - 1],
-    userTicks: after[0] - before[0],
-    kernelTicks: after[1] - before[1]
-  });
-  console.log(
-    `${name.padEnd(8)} first ${String(firstMs).padStart(6)} ms  ` +
-      `median ${String(results.at(-1).medianMs).padStart(6)} ms ` +
-      `(${results.at(-1).minMs}-${results.at(-1).maxMs})  ` +
-      `ticks user ${after[0] - before[0]} kernel ${after[1] - before[1]}`
-  );
+try {
+  resumeMs = await machine.resume();
+  await runWorkloads();
+} catch (error) {
+  console.error(`bench: ${error.message}`);
+  await machine.destroy();
+  process.exit(1);
 }
-await emulator.destroy();
+await machine.destroy();
+
+async function runWorkloads() {
+  for (const [name, command] of workloads) {
+    const before = await cpuTicks();
+    const firstMs = await run(command, name);
+    const after = await cpuTicks();
+    const times = [];
+    for (let i = 0; i < runs; i++) times.push(await run(command, name));
+    times.sort((a, b) => a - b);
+    results.push({
+      name,
+      command,
+      firstMs,
+      medianMs: times[Math.floor(times.length / 2)],
+      minMs: times[0],
+      maxMs: times[times.length - 1],
+      userTicks: after[0] - before[0],
+      kernelTicks: after[1] - before[1]
+    });
+    console.log(
+      `${name.padEnd(8)} first ${String(firstMs).padStart(6)} ms  ` +
+        `median ${String(results.at(-1).medianMs).padStart(6)} ms ` +
+        `(${results.at(-1).minMs}-${results.at(-1).maxMs})  ` +
+        `ticks user ${after[0] - before[0]} kernel ${after[1] - before[1]}`
+    );
+  }
+}
 
 const report = {
   label,
   date: new Date().toISOString(),
-  snapshotBytes: compressed.length,
+  snapshotBytes: compressedBytes,
   decompressMs,
   restoreMs,
   resumeMs,
@@ -225,7 +149,7 @@ fs.writeFileSync(
   JSON.stringify(report, null, 2) + "\n"
 );
 console.log(
-  `snapshot ${(compressed.length / 1024 / 1024).toFixed(1)} MiB, ` +
+  `snapshot ${(compressedBytes / 1024 / 1024).toFixed(1)} MiB, ` +
     `decompress ${decompressMs} ms, restore ${restoreMs} ms, resume ${resumeMs} ms`
 );
 console.log(`Wrote build/bench/${label}.json`);

@@ -2,7 +2,7 @@
 
 | Dependency | Set in | Upstream | When updating |
 |---|---|---|---|
-| Linux | `KERNEL_VERSION`, `KERNEL_SHA256` in `kernel/build.sh` | [6.18 long-term](https://www.kernel.org/) | Update the hash too; run `kernel/scripts/compare-config.py` against Alpine's matching `virt` config |
+| Linux | `KERNEL_VERSION`, `KERNEL_SHA256` in `kernel/build.sh` | [6.18 long-term](https://www.kernel.org/) | Update the hash too; the patches in `kernel/patches/` must still apply; run `kernel/scripts/compare-config.py` against Alpine's matching `virt` config |
 | Departure Mono | `DEPARTURE_VERSION`, `DEPARTURE_SHA256` in `fonts/build.py` | [releases](https://github.com/rektdeckard/departure-mono/releases) | Update the hash too |
 | Fusion Pixel Font | `FUSION_VERSION`, `FUSION_SHA256` in `fonts/build.py` | [releases](https://github.com/TakWolf/fusion-pixel-font/releases) | Update the hash too |
 | Node | `devEngines.runtime` in `package.json` | [releases](https://nodejs.org/en/about/previous-releases) | Bump `@types/node` to the same major; Dependabot skips its majors |

@@ -44,14 +44,17 @@ jobs:
       - uses: actions/cache@v6.1.0
         with:
           path: build/kernel/release
-          # The files kernel/build.sh hashes. Not kernel/**: the unit tests above
-          # leave __pycache__ directories, which change on every checkout.
-          key: kernel-${{ hashFiles('kernel/Dockerfile', 'kernel/build.sh', 'kernel/scripts/check-config.py', 'kernel/config/*.config') }}
+          # The files kernel/build.sh hashes (the patches by contents, in name
+          # order, as here). Not kernel/**: the unit tests above leave
+          # __pycache__ directories, which change on every checkout.
+          key: kernel-${{ hashFiles('kernel/Dockerfile', 'kernel/build.sh', 'kernel/scripts/check-config.py', 'kernel/config/*.config', 'kernel/patches/*.patch') }}
       # Image, snapshot and site, checked against the static asset limits. Each
       # build takes the current Alpine packages.
       - run: make check
         env:
           GITHUB_TOKEN: ${{ github.token }}
+      # Boots the built snapshot headlessly: prompt, and the power events.
+      - run: make test
       - if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v7.0.2
         with:

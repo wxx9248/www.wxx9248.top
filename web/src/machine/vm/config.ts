@@ -1,6 +1,7 @@
 // Machine configuration shared by the snapshot builder and the page. A snapshot
 // only restores into a machine configured exactly like the one that saved it.
-// snapshot/build.mjs loads this file in Node, which doesn't know the @/ alias.
+// snapshot/build.mjs and machine.mjs load this file in Node, which doesn't know
+// the @/ alias.
 
 export const MEMORY_SIZE = 128 * 1024 * 1024;
 export const VGA_MEMORY_SIZE = 2 * 1024 * 1024;
