@@ -34,12 +34,12 @@ DEPARTURE_SHA256 = "bf3e48059aeef4617ec585bdea81dcc3491c576b3e7a472f52faf40e09ee
 # index.html and 404.html preload it by this name, and base.css declares it.
 DEPARTURE_FONT = "DepartureMono-Regular.woff2"
 
-FUSION_VERSION = "2026.10.25"
+FUSION_VERSION = "2026.11.10"
 FUSION_URL = (
     "https://github.com/TakWolf/fusion-pixel-font/releases/download/"
     f"{FUSION_VERSION}/fusion-pixel-font-12px-monospaced-otf.woff2-v{FUSION_VERSION}.zip"
 )
-FUSION_SHA256 = "010223860f2dc625d672377917a3d585da698ce67e947418b603f6410591556c"
+FUSION_SHA256 = "a7ac098e3515a8e0766a2e740000b9a10711252ca64c8e300983a3fbbaebd471"
 # Every language build has the same characters; they differ only in the
 # regional shapes of some Han characters.
 FUSION_FONT = "fusion-pixel-12px-monospaced-zh_hans.otf.woff2"

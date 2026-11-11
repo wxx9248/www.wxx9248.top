@@ -6,8 +6,8 @@
 # inputs.sha256, which lets a later run skip the build when nothing changed.
 set -euo pipefail
 
-KERNEL_VERSION=6.18.60
-KERNEL_SHA256=3c2f44ef6acc021a7ad444d9a2e6ec1ef488ff09368793d0004a6080f69d621e
+KERNEL_VERSION=6.18.62
+KERNEL_SHA256=490a7aedf1b355c565d3a6c05333ccccb5da82064eca46b590448a7099d7d651
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD="${1:-}"

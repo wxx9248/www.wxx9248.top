@@ -3,7 +3,7 @@
 {
   "name": "homepage",
   // At most the newest date the pinned wrangler's workerd supports.
-  "compatibility_date": "2026-10-19",
+  "compatibility_date": "2026-11-03",
   "assets": {
     "directory": "./web/dist",
     // Paths with no file get web/404.html with status 404, not the homepage.

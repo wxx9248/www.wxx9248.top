@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "license": "AGPL-3.0-or-later",
-  "packageManager": "pnpm@12.17.0",
+  "packageManager": "pnpm@12.19.0",
   "devEngines": {
     "runtime": {
       "name": "node",
