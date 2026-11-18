@@ -30,7 +30,7 @@ jobs:
           persist-credentials: false
       # pnpm and Node from packageManager and devEngines in package.json, then
       # pnpm install.
-      - uses: pnpm/setup@v3.1.2
+      - uses: pnpm/setup@v3.2.0
         with:
           cache: true
           require-lockfile: true
@@ -91,7 +91,7 @@ jobs:
         with:
           persist-credentials: false
       # For wrangler.
-      - uses: pnpm/setup@v3.1.2
+      - uses: pnpm/setup@v3.2.0
         with:
           cache: true
           require-lockfile: true
