@@ -34,7 +34,7 @@ jobs:
         with:
           cache: true
           require-lockfile: true
-      - uses: astral-sh/setup-uv@v10.3.3
+      - uses: astral-sh/setup-uv@v10.4.0
       - run: pnpm typecheck
       - run: pnpm format:check
       - run: uv run python -m unittest discover -s kernel/tests
